@@ -1,0 +1,48 @@
+# General
+# Ignore common temporary files from operating systems and editors
+.DS_Store
+Thumbs.db
+*.swp
+*.bak
+*.tmp
+
+# STM32CubeMX generated files
+# Keep the .ioc file, which is the source of truth for hardware configuration.
+# Only ignore the automatic backup file.
+*.ioc.backup
+
+################################################################
+# MDK-ARM (Keil uVision) specific files
+#
+# The main project file (*.uvprojx) and startup file (*.s)
+# are ESSENTIAL and should NOT be ignored.
+################################################################
+
+# Ignore the main build output folder. 
+# This single line handles all the .o, .d, .crf, .axf, .hex, .map, etc., files.
+MDK-ARM/stm32f407vet6_lekiwi/
+
+# Ignore other Keil-generated folders
+MDK-ARM/RTE/
+MDK-ARM/DebugConfig/
+MDK-ARM/Listings/
+MDK-ARM/Objects/
+
+# Ignore user-specific Keil settings files.
+# .uvoptx contains debug settings, breakpoints, and watch variables. 
+# Ignoring it prevents merge conflicts in a team environment.
+MDK-ARM/*.uvoptx
+
+# .uvguix contains the GUI state (window positions, etc.) for a specific user.
+MDK-ARM/*.uvguix.*
+
+# Ignore other potential build artifacts that might be generated outside the main build folder
+MDK-ARM/*.lst
+MDK-ARM/*.build_log.htm
+MDK-ARM/*.htm
+
+# Generic build artifacts (as a fallback)
+build/
+Build/
+Debug/
+Release/

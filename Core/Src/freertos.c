@@ -135,10 +135,9 @@ void StartDefaultTask(void *argument)
 //    Motor_Set_Speed(1, 25);  // 电机1以25%速度正转
 //    Motor_Set_Speed(2, -50); // 电机2以50%速度反转
     
-    for(int i=0;i<3;i++)
+    for(int i=1;i<=3;i++)
     {
-        Motor_Set_Speed(i,50);
-        
+        Motor_Set_Speed(i,spp[i-1]);
     }      
 //    float speed1 = Motor_Get_Speed(1);
       

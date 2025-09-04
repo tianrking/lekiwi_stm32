@@ -117,6 +117,13 @@ void MX_FREERTOS_Init(void) {
 //    Motor_Set_Speed(2, -50); // 电机2以50%速度反转
 extern Motor_t g_motors[MOTOR_COUNT];
 int16_t spp[MOTOR_COUNT];
+
+
+//////////////  for rc
+#define RC_DEADBAND 10
+// 定义最大RPM，用于将遥控器指令映射到转速
+#define MAX_RPM 1000.0f
+///////////////////
 /**
   * @brief  Function implementing the defaultTask thread.
   * @param  argument: Not used
@@ -140,27 +147,55 @@ void StartDefaultTask(void *argument)
   for(;;)
   {
       
-     if (ppm_frame_ready)
+    // 检查是否有新的一帧PPM遥控数据
+    if (ppm_frame_ready)
     {
-        // a. 处理原始数据，填充 filtered_channel_values 数组
+        // 1. 处理原始数据，填充 filtered_channel_values 数组
         process_channel_values();
         
-        // b. 清除标志位，等待下一帧
+        // 2. 清除标志位，等待下一帧
         ppm_frame_ready = 0;
 
-        // c. 将遥控器通道值转化为电机的目标速度
-        //    例如: 通道0 (油门) 控制电机0, 通道1 (方向) 控制电机1
+        // 3. 【核心控制逻辑】
+        // a. 获取前进/后退 和 旋转的遥控指令 (-100 to 100)
+        int16_t forward_cmd = filtered_channel_values[2];
+        int16_t rotation_cmd = filtered_channel_values[0];
         
-        // 将通道0的 -100~100 映射到 电机0 的 -1000~1000 RPM 目标速度
-        float target_rpm_0 = (filtered_channel_values[0] / 100.0f) * 1000.0f;
-        // 将通道1的 -100~100 映射到 电机1 的 -1000~1000 RPM 目标速度
-        float target_rpm_1 = (filtered_channel_values[1] / 100.0f) * 1000.0f;
+        // b. 应用死区
+        if (forward_cmd > -RC_DEADBAND && forward_cmd < RC_DEADBAND) {
+            forward_cmd = 0;
+        }
+        if (rotation_cmd > -RC_DEADBAND && rotation_cmd < RC_DEADBAND) {
+            rotation_cmd = 0;
+        }
+
+        // c. 【运动混合】计算每个轮子的最终指令
+        //    最终指令 = 前进/后退分量 + 旋转分量
+        int16_t motor_cmd_0 = forward_cmd + rotation_cmd;
+        int16_t motor_cmd_1 = -forward_cmd + rotation_cmd;
+        int16_t motor_cmd_2 = 0           + rotation_cmd; // 电机2只参与旋转
+
+        // d. 【指令限幅】防止叠加后的值超出 -100 ~ 100 的范围
+        if (motor_cmd_0 > 100) motor_cmd_0 = 100;
+        if (motor_cmd_0 < -100) motor_cmd_0 = -100;
         
-//        Motor_Set_Target_Speed(0, target_rpm_0);
-//        Motor_Set_Target_Speed(1, target_rpm_1);
-//        // 您可以根据需要为电机2也分配一个通道
-//        Motor_Set_Target_Speed(2, 0); // 暂不控制
+        if (motor_cmd_1 > 100) motor_cmd_1 = 100;
+        if (motor_cmd_1 < -100) motor_cmd_1 = -100;
+        
+        if (motor_cmd_2 > 100) motor_cmd_2 = 100;
+        if (motor_cmd_2 < -100) motor_cmd_2 = -100;
+        
+        // e. 将最终的控制指令 (-100 to 100) 映射为PID的目标转速 (RPM)
+        float target_rpm_0 = (motor_cmd_0 / 100.0f) * MAX_RPM;
+        float target_rpm_1 = (motor_cmd_1 / 100.0f) * MAX_RPM;
+        float target_rpm_2 = (motor_cmd_2 / 100.0f) * MAX_RPM;
+        
+        // f. 将计算出的目标速度下发给PID控制器
+        Motor_Set_Target_Speed(0, target_rpm_0);
+        Motor_Set_Target_Speed(1, target_rpm_1);
+        Motor_Set_Target_Speed(2, target_rpm_2);
     }
+
       
 //        for(int i = 0 ;i <3 ; i++)
 //      {

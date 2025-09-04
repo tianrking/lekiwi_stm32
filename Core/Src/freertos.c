@@ -129,7 +129,7 @@ void StartDefaultTask(void *argument)
   Motor_Init();  // 初始化我们的电机模块
   Motor_Start(); // 启动所有电机相关的硬件
 
-      Motor_Set_Target_Speed(0, 0.0f);   // 命令电机0 (原电机1) 以 500 RPM 旋转
+  Motor_Set_Target_Speed(0, 0.0f);   // 命令电机0 (原电机1) 以 500 RPM 旋转
   Motor_Set_Target_Speed(1, 0.0f);  // 命令电机1 (原电机2) 以 300 RPM 反向旋转
   Motor_Set_Target_Speed(2, 0.0f);     // 命令电机2 (原电机3) 保持静止
     

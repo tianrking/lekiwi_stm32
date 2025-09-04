@@ -28,6 +28,7 @@
 #include "tim.h"
 #include "motor_control.h"
 #include "ppm.h"
+#include "protocol.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -137,6 +138,8 @@ void StartDefaultTask(void *argument)
   Motor_Init();  // 初始化我们的电机模块
   Motor_Start(); // 启动所有电机相关的硬件
     
+  Protocol_Init();
+    
   HAL_TIM_IC_Start_IT(&htim10, TIM_CHANNEL_1);
 
   Motor_Set_Target_Speed(0, 0.0f);   // 命令电机0 (原电机1) 以 500 RPM 旋转
@@ -146,6 +149,7 @@ void StartDefaultTask(void *argument)
     /* Infinite loop */
   for(;;)
   {
+    Protocol_Process();
       
     // 检查是否有新的一帧PPM遥控数据
     if (ppm_frame_ready)

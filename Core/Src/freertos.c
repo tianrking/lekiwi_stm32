@@ -128,20 +128,23 @@ void StartDefaultTask(void *argument)
     
   Motor_Init();  // 初始化我们的电机模块
   Motor_Start(); // 启动所有电机相关的硬件
-  /* Infinite loop */
+
+      Motor_Set_Target_Speed(0, 0.0f);   // 命令电机0 (原电机1) 以 500 RPM 旋转
+  Motor_Set_Target_Speed(1, 0.0f);  // 命令电机1 (原电机2) 以 300 RPM 反向旋转
+  Motor_Set_Target_Speed(2, 0.0f);     // 命令电机2 (原电机3) 保持静止
+    
+    /* Infinite loop */
   for(;;)
   {
       
-//    Motor_Set_Speed(1, 25);  // 电机1以25%速度正转
-//    Motor_Set_Speed(2, -50); // 电机2以50%速度反转
-    
-    for(int i=1;i<=3;i++)
-    {
-        Motor_Set_Speed(i,spp[i-1]);
-    }      
-//    float speed1 = Motor_Get_Speed(1);
-      
-    osDelay(1);
+//        for(int i = 0 ;i <3 ; i++)
+//      {
+//          Motor_Set_PWM_Duty(i,spp[i]);
+//      }
+    //Motor_Run_PID_Control();
+    //osDelay(1);
+      Motor_Run_PID_Control();
+      osDelay(20); 
   }
   /* USER CODE END StartDefaultTask */
 }
@@ -149,5 +152,4 @@ void StartDefaultTask(void *argument)
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
 
-/* USER CODE END Application */
 

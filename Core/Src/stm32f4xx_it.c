@@ -26,7 +26,10 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN TD */
-
+#include "ppm.h"
+#include "stdio.h"
+#include "string.h"
+#include "stdlib.h"
 /* USER CODE END TD */
 
 /* Private define ------------------------------------------------------------*/
@@ -57,13 +60,15 @@
 /* External variables --------------------------------------------------------*/
 extern TIM_HandleTypeDef htim1;
 extern TIM_HandleTypeDef htim9;
+extern TIM_HandleTypeDef htim10;
 extern UART_HandleTypeDef huart1;
 extern UART_HandleTypeDef huart2;
 extern UART_HandleTypeDef huart3;
 extern TIM_HandleTypeDef htim14;
 
 /* USER CODE BEGIN EV */
-
+static uint8_t  ppm_channel_index = 0;
+static uint32_t last_capture_val  = 0;
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -165,6 +170,20 @@ void DebugMon_Handler(void)
 /******************************************************************************/
 
 /**
+  * @brief This function handles EXTI line[9:5] interrupts.
+  */
+void EXTI9_5_IRQHandler(void)
+{
+  /* USER CODE BEGIN EXTI9_5_IRQn 0 */
+
+  /* USER CODE END EXTI9_5_IRQn 0 */
+  HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_6);
+  /* USER CODE BEGIN EXTI9_5_IRQn 1 */
+
+  /* USER CODE END EXTI9_5_IRQn 1 */
+}
+
+/**
   * @brief This function handles TIM1 break interrupt and TIM9 global interrupt.
   */
 void TIM1_BRK_TIM9_IRQHandler(void)
@@ -177,6 +196,21 @@ void TIM1_BRK_TIM9_IRQHandler(void)
   /* USER CODE BEGIN TIM1_BRK_TIM9_IRQn 1 */
 
   /* USER CODE END TIM1_BRK_TIM9_IRQn 1 */
+}
+
+/**
+  * @brief This function handles TIM1 update interrupt and TIM10 global interrupt.
+  */
+void TIM1_UP_TIM10_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM1_UP_TIM10_IRQn 0 */
+
+  /* USER CODE END TIM1_UP_TIM10_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim1);
+  HAL_TIM_IRQHandler(&htim10);
+  /* USER CODE BEGIN TIM1_UP_TIM10_IRQn 1 */
+
+  /* USER CODE END TIM1_UP_TIM10_IRQn 1 */
 }
 
 /**
@@ -236,5 +270,41 @@ void TIM8_TRG_COM_TIM14_IRQHandler(void)
 }
 
 /* USER CODE BEGIN 1 */
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
+{
+  /* USER CODE BEGIN TIM_IC_CaptureCallback 0 */
+    // 确保中断来自于我们配置的 TIM10
+    if (htim->Instance == TIM10 && htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1)
+    {
+        uint32_t current_capture_val = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);
+        uint32_t diff;
+
+        if (current_capture_val >= last_capture_val) {
+            diff = current_capture_val - last_capture_val;
+        } else {
+            diff = (65535 - last_capture_val) + current_capture_val + 1;
+        }
+        last_capture_val = current_capture_val;
+
+        if (diff > 3000)
+        {
+            ppm_channel_index = 0;
+        }
+        else
+        {
+            if (ppm_channel_index < PPM_CHANNELS)
+            {
+                PPM_Databuf[ppm_channel_index] = (uint16_t)diff;
+                ppm_channel_index++;
+                if (ppm_channel_index == PPM_CHANNELS)
+                {
+                    ppm_frame_ready = 1; // 设置标志位
+                }
+            }
+        }
+    }
+  /* USER CODE END TIM_IC_CaptureCallback 0 */
+}
 
 /* USER CODE END 1 */
+

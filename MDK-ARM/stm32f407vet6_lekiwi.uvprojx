@@ -976,6 +976,11 @@
               <FileType>1</FileType>
               <FilePath>..\CUS\motor_control.c</FilePath>
             </File>
+            <File>
+              <FileName>ppm.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\CUS\ppm.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

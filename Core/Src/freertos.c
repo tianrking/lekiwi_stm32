@@ -27,6 +27,7 @@
 /* USER CODE BEGIN Includes */
 #include "tim.h"
 #include "motor_control.h"
+#include "ppm.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -128,6 +129,8 @@ void StartDefaultTask(void *argument)
     
   Motor_Init();  // 初始化我们的电机模块
   Motor_Start(); // 启动所有电机相关的硬件
+    
+  HAL_TIM_IC_Start_IT(&htim10, TIM_CHANNEL_1);
 
   Motor_Set_Target_Speed(0, 0.0f);   // 命令电机0 (原电机1) 以 500 RPM 旋转
   Motor_Set_Target_Speed(1, 0.0f);  // 命令电机1 (原电机2) 以 300 RPM 反向旋转
@@ -136,6 +139,28 @@ void StartDefaultTask(void *argument)
     /* Infinite loop */
   for(;;)
   {
+      
+     if (ppm_frame_ready)
+    {
+        // a. 处理原始数据，填充 filtered_channel_values 数组
+        process_channel_values();
+        
+        // b. 清除标志位，等待下一帧
+        ppm_frame_ready = 0;
+
+        // c. 将遥控器通道值转化为电机的目标速度
+        //    例如: 通道0 (油门) 控制电机0, 通道1 (方向) 控制电机1
+        
+        // 将通道0的 -100~100 映射到 电机0 的 -1000~1000 RPM 目标速度
+        float target_rpm_0 = (filtered_channel_values[0] / 100.0f) * 1000.0f;
+        // 将通道1的 -100~100 映射到 电机1 的 -1000~1000 RPM 目标速度
+        float target_rpm_1 = (filtered_channel_values[1] / 100.0f) * 1000.0f;
+        
+//        Motor_Set_Target_Speed(0, target_rpm_0);
+//        Motor_Set_Target_Speed(1, target_rpm_1);
+//        // 您可以根据需要为电机2也分配一个通道
+//        Motor_Set_Target_Speed(2, 0); // 暂不控制
+    }
       
 //        for(int i = 0 ;i <3 ; i++)
 //      {
@@ -152,4 +177,5 @@ void StartDefaultTask(void *argument)
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
 
+/* USER CODE END Application */
 
